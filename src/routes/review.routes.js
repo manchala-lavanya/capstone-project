@@ -18,3 +18,4 @@ module.exports = function (app) {
   // Admin can delete reviews
   app.delete("/api/admin/reviews/:id", [verifyToken, verifyRole('admin')], controller.deleteByAdmin);
 };
+

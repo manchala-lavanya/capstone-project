@@ -7,3 +7,4 @@ module.exports = function(app) {
   // Login user
   app.post("/api/login", authController.login);
 };
+

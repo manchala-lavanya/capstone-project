@@ -39,3 +39,4 @@ module.exports = function (app) {
   // Delete a book (Authenticated user or admin)
   app.delete("/api/books/:id", [verifyToken], controller.deleteById);
 };
+
