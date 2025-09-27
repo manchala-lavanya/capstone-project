@@ -1,98 +1,114 @@
-const Book = require("../models/book.model");  // The path to the model
+const mongoose = require("mongoose");
+const Book = require('../models/book.model');
 
+// Add a book (Only Admins can add)
 exports.add = async (req, res) => {
   try {
     const { title, author, genre, year, description } = req.body;
 
-    // Create a new book instance
+    // Check if the user is an admin -  Only admin can add books 
+    if (req.userRole !== 'admin') {
+      return res.status(403).json({ message: 'Only admins can add books' });
+    }
+
     const newBook = new Book({
       title,
       author,
       genre,
       year,
       description,
+      addedBy: req.userId, // Store the ID of the user who added the book
     });
 
-    // Save the new book to the database
     const savedBook = await newBook.save();
-
-    // Send the created book back in the response
     res.status(201).json(savedBook);
   } catch (err) {
-    console.error("Error adding book:", err);
-    res.status(500).json({ message: "Error adding book" });
-  }
-};
-
-// Get all books
-exports.getAll = async (req, res) => {
-  try {
-    const books = await Book.find();  // Fetch all books
-    res.status(200).json(books);
-  } catch (err) {
-    console.error("Error fetching books:", err);
-    res.status(500).json({ message: "Error fetching books" });
+    console.error('Error adding book:', err);
+    res.status(500).json({ message: 'Error adding book' });
   }
 };
 
 // Get a book by ID
 exports.getById = async (req, res) => {
   try {
-    const { id } = req.params;  // Get book ID from URL params
-
+    const { id } = req.params;
     // Validate if the ID is a valid ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid book ID" });
+      return res.status(400).json({ message: 'Invalid book ID' });
     }
-    const book = await Book.findById(id);  // Find book by ID
-
+    const book = await Book.findById(id);
     if (!book) {
-      return res.status(404).json({ message: "Book not found" });
+      return res.status(404).json({ message: 'Book not found' });
     }
     res.status(200).json(book);
   } catch (err) {
-    console.error("Error fetching book:", err);
-    res.status(500).json({ message: "Error fetching book" });
+    console.error('Error fetching book:', err);
+    res.status(500).json({ message: 'Error fetching book' });
   }
 };
 
-// Update a book by ID
+// Update a book by ID (Only the book owner or an admin can update)
 exports.updateById = async (req, res) => {
   try {
-    const { id } = req.params;  // Get book ID from URL params
+    const { id } = req.params;
     const { title, author, genre, year, description } = req.body;
-
-    const updatedBook = await Book.findByIdAndUpdate(
-      id,
-      { title, author, genre, year, description },
-      { new: true }  // Return the updated book
-    );
-
-    if (!updatedBook) {
+    if (!mongoose.Types.ObjectId.isValid(id))
+      return res.status(400).json({ message: "Invalid book ID" });
+    const book = await Book.findById(id);
+    if (!book) 
       return res.status(404).json({ message: "Book not found" });
+    // Check if the user is the one who added the book or an admin
+    if (book.addedBy.toString() !== req.userId && req.userRole !== "admin") {
+      return res.status(403).json({ message: "Forbidden: Not authorized to edit this book" });
     }
 
-    res.status(200).json(updatedBook);
+    book.title = title || book.title;
+    book.author = author || book.author;
+    book.genre = genre || book.genre;
+    book.year = year || book.year;
+    book.description = description || book.description;
+
+    const updatedBook = await book.save();
+    res.status(200).json(updatedBook); // Return the updated book
   } catch (err) {
     console.error("Error updating book:", err);
     res.status(500).json({ message: "Error updating book" });
   }
 };
 
-// Delete a book by ID
+// Delete a book by ID (Only the book owner or an admin can delete)
 exports.deleteById = async (req, res) => {
   try {
-    const { id } = req.params;  // Get book ID from URL params
-
-    const deletedBook = await Book.findByIdAndDelete(id);
-
-    if (!deletedBook) {
-      return res.status(404).json({ message: "Book not found" });
+    const book = await Book.findById(req.params.id);
+    if (!book) {
+      return res.status(404).json({ message: 'Book not found' });
     }
-
-    res.status(200).json({ message: "Book deleted successfully" });
+    // Check if the user is the one who added the book or an admin
+    if (book.addedBy.toString() !== req.userId && req.userRole !== 'admin') {
+      return res.status(403).json({ message: 'Only the book owner or an admin can delete this book' });
+    }
+    await Book.findByIdAndDelete(req.params.id);
+    res.status(200).json({ message: 'Book deleted successfully' });
   } catch (err) {
-    console.error("Error deleting book:", err);
-    res.status(500).json({ message: "Error deleting book" });
+    res.status(500).json({ message: 'Error deleting book' });
+  }
+};
+
+// List/Search Books (Everyone)
+exports.getAll = async (req, res) => {
+  try {
+    const { title, author, genre, year } = req.query;
+
+    const filters = {};
+    if (title) filters.title = { $regex: title, $options: 'i' };
+    if (author) filters.author = { $regex: author, $options: 'i' };
+    if (genre) filters.genre = { $regex: genre, $options: 'i' };
+    if (year) filters.year = year;
+
+    const books = await Book.find(filters);
+    res.status(200).json(books);
+  } catch (err) {
+    // console.error('Error fetching books:', err);
+    res.status(500).json({ message: 'Error fetching books' });
   }
 };
