@@ -1,4 +1,4 @@
-require('dotenv').config({ path: './.env' });  // Explicitly set the .env path 
+require('dotenv').config({ path: './.env' });  // Set the .env path 
 console.log("JWT_SECRET:", process.env.JWT_SECRET); 
 
 const express = require("express");
@@ -39,6 +39,7 @@ db.mongoose
 const authRoutes = require("./src/routes/auth.routes"); // Import the auth routes
 const bookRoutes = require("./src/routes/book.routes");  // Book-related routes
 const reviewRoutes = require("./src/routes/review.routes");  // Review-related routes
+const userRoutes = require("./src/routes/user.routes"); //USer-related routes
 
 // Error handling middleware for known and unknown errors
 app.use((err, req, res, next) => {
@@ -67,6 +68,7 @@ app.use((err, req, res, next) => {
 authRoutes(app);  // Register the auth routes
 bookRoutes(app);  // Register the book routes
 reviewRoutes(app);  // Register the review routes
+userRoutes(app); // Register the user routes
 
 // Set port and listen for requests to start server
 const PORT = process.env.PORT || 8000;
