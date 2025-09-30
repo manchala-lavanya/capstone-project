@@ -14,23 +14,24 @@ const userSchema = new mongoose.Schema(
       required: [true, 'Email is required'],
       unique: true,
       trim: true,
+      match: [/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/, 'Please enter a valid email address']
     },
     password: {
       type: String,
       required: [true, 'Password is required'],
     },
-    role: {
-      type: String,
-      enum: ['user', 'admin'],
-      default: 'user',  // Default to 'user' if role is not specified
-    },
+    role: { 
+      type: String, 
+      enum: ['user', 'admin'], 
+      default: 'user' 
+    }
   },
   { timestamps: true }
 );
 
 // Hash password before saving the user
 userSchema.pre('save', async function (next) {
-  if (this.isModified('password')) {
+  if (this.isModified('password') || this.isNew) {
     this.password = await bcrypt.hash(this.password, 10);
   }
   next();

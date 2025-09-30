@@ -1,9 +1,10 @@
 require('dotenv').config({ path: './.env' });  // Explicitly set the .env path 
-console.log("JWT_SECRET:", process.env.JWT_SECRET); 
+console.log("JWT_SECRET:", process.env.JWT_SECRET);
 
 const express = require("express");
 const cors = require("cors");
 const dbConfig = require("./src/config/db.config");
+const Role = require("./src/models/role.model");
 
 //To create an Express application instance as app is main object of server
 const app = express();
@@ -35,10 +36,28 @@ db.mongoose
     process.exit();
   });
 
+const setInitialRolesInDB = async () => {
+  try {
+    const count = await Role.estimatedDocumentCount();
+    if (count === 0) {
+      await new Role({ name: "Admin" }).save();
+      console.log("'Admin' role created successfully");
+
+      await new Role({ name: "User" }).save();
+      console.log("'User' role created successfully");
+    }
+  } catch (error) {
+    console.error("Error in setting initial roles:", error);
+  }
+}
+
+setInitialRolesInDB();
+
 // Import routes
 const authRoutes = require("./src/routes/auth.routes"); // Import the auth routes
 const bookRoutes = require("./src/routes/book.routes");  // Book-related routes
 const reviewRoutes = require("./src/routes/review.routes");  // Review-related routes
+const userRoutes = require("./src/routes/user.routes"); //USer-related routes
 
 // Error handling middleware for known and unknown errors
 app.use((err, req, res, next) => {
@@ -67,6 +86,9 @@ app.use((err, req, res, next) => {
 authRoutes(app);  // Register the auth routes
 bookRoutes(app);  // Register the book routes
 reviewRoutes(app);  // Register the review routes
+userRoutes(app); // Register the user routes
+
+
 
 // Set port and listen for requests to start server
 const PORT = process.env.PORT || 8000;

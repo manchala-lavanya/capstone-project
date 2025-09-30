@@ -17,29 +17,33 @@ const bookSchema = new mongoose.Schema(
       required: [true, "Genre is required"],
       trim: true,
       enum: {
-        values: ["Fiction", "Non-Fiction", "Mystery", "Sci-Fi", "Fantasy"],  // Add your fixed genres here
-        message: '{VALUE} is not a valid genre',  // error message
+        values: ["Fiction", "Non-Fiction", "Mystery", "Sci-Fi", "Fantasy", "Romance"],
+        message: '{VALUE} is not a valid genre',
       },
     },
     year: {
       type: Number,
       required: [true, "Year is required"],
       min: [1900, "Year must be after 1900"],
-      max: [new Date().getFullYear(), "Year cannot be in the future"],  // Current year as max limit
+      max: [new Date().getFullYear(), "Year cannot be in the future"],
     },
     description: {
       type: String,
       trim: true,
-      maxlength: [1000, "Description must be less than 1000 characters"], // Limit the length of description
+      maxlength: [1000, "Description must be less than 1000 characters"],
       default: "No description provided",
+    },
+    addedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
   },
   {
-    timestamps: true, // Automatically add createdAt and updatedAt fields
+    timestamps: true,
   }
 );
 
 const Book = mongoose.model("Book", bookSchema);
 
 module.exports = Book;
-
