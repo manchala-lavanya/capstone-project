@@ -42,7 +42,6 @@ module.exports = function (app) {
     }
   ], controller.updateById);
 
-
   // Delete a book (Authenticated user or admin)
   app.delete('/api/books/:id', [
     verifyToken,
